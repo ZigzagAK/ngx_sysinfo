@@ -191,9 +191,6 @@ typedef struct {
 } ngx_slab_pool_t;
 */
 
-#define NGX_SLAB_PAGE_BUSY   0xffffffff
-#define NGX_SLAB_PAGE_START  0x8000000000000000
-
 static void
 ngx_sysinfo_status_json_format(ngx_buf_t *b)
 {
@@ -239,6 +236,5 @@ ngx_sysinfo_status_json_format(ngx_buf_t *b)
 
     b->last--;
 
-    b->last = ngx_snprintf(b->last, b->end - b->last,
-                           "]}");
+    b->last = ngx_snprintf(b->last, b->end - b->last, "]}");
 }
