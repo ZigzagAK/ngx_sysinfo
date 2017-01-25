@@ -1,7 +1,7 @@
 Name
 ====
 
-ngx_sysinfo - Get informations about nginx internals.
+ngx_sysinfo - get information about nginx internals.
 
 Table of Contents
 =================
@@ -21,7 +21,8 @@ Description
 ===========
 
 Various information about nginx internals.
-Currently contains information about shared memory usage.
+
+Currently contains information about shared memory usage (only free pages).
 
 [Back to TOC](#table-of-contents)
 
@@ -45,16 +46,10 @@ Output
   "used": "46Mb",
   "total": "1054Mb",
   "usage": {
-    "quota_remains": "3%",
-    "quota_addinfo": "3%",
-    "quota_hits": "1%",
-    "quota_locks": "1%",
-    "quota_ids_lim": "3%",
-    "resources_cache": "13%",
-    "limit_req_limit": "3%",
-    "resources_locks": "1%",
-    "resources_queue": "1%",
-    "limit_req_queue": "9%"
+    "zone1": "3%",
+    "zone2": "3%",
+    "zone3": "1%",
+    "zone4": "1%"
   }
 }
 ```
