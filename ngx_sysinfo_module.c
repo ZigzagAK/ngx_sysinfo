@@ -159,53 +159,29 @@ ngx_sysinfo_status_handler(ngx_http_request_t *r)
     return ngx_http_output_filter(r, &out);
 }
 
-/*
-struct ngx_slab_page_s {
-    uintptr_t         slab;
-    ngx_slab_page_t  *next;
-    uintptr_t         prev;
-};
-
-typedef struct {
-    ngx_shmtx_sh_t    lock;
-
-    size_t            min_size;
-    size_t            min_shift;
-
-    ngx_slab_page_t  *pages;
-    ngx_slab_page_t  *last;
-    ngx_slab_page_t   free;
-
-    u_char           *start;
-    u_char           *end;
-
-    ngx_shmtx_t       mutex;
-
-    u_char           *log_ctx;
-    u_char            zero;
-
-    unsigned          log_nomem:1;
-
-    void             *data;
-    void             *addr;
-} ngx_slab_pool_t;
-*/
-
 static void
 ngx_sysinfo_status_json_format(ngx_buf_t *b)
 {
-    ngx_uint_t        i;
+    ngx_uint_t        i, count;
     ngx_shm_zone_t   *shm_zone;
     ngx_slab_pool_t  *shpool;
     ngx_slab_page_t  *page;
     ngx_list_part_t  *part;
     size_t            free_pages, total_pages;
+#if defined(nginx_version) && (nginx_version >= 1011007)
+    size_t            sum_size;
+    size_t            slot_count;
+    size_t            slot_size;
+    ngx_slab_stat_t  *stat;
+#endif
 
     b->last = ngx_snprintf(b->last, b->end - b->last,
                            "{\"shared_memory\": [");
 
     part = (ngx_list_part_t *) &(ngx_cycle->shared_memory.part);
     shm_zone = part->elts;
+
+    count = 0;
 
     for (i = 0; /* void */ ; i++) {
         if (i >= part->nelts) {
@@ -221,20 +197,49 @@ ngx_sysinfo_status_json_format(ngx_buf_t *b)
         free_pages = 0;
         total_pages = (shpool->end - shpool->start) / ngx_pagesize;
 
+        count++;
+
         ngx_shmtx_lock(&shpool->mutex);
 
         for (page = shpool->free.next; page != &shpool->free; page = page->next) {
             free_pages += page->slab;
         }
 
+#if defined(nginx_version) && (nginx_version >= 1011007)
+        b->last = ngx_snprintf(b->last, b->end - b->last,
+                               "{\"name\": \"%s\",\"pages\":%l,\"free_pages\":%l,\"used\":\"%l%%\",\"slab\":[",
+                               shm_zone[i].shm.name.data, total_pages, free_pages, 100 * (total_pages - free_pages) / total_pages);
+
+        slot_count = ngx_pagesize_shift - shpool->min_shift;
+        stat = shpool->stats;
+        slot_size = shpool->min_size;
+        sum_size = 0;
+
+        for (i = 0; i < slot_count; i++) {
+            sum_size += stat->used * slot_size;
+            b->last = ngx_snprintf(b->last, b->end - b->last,
+                                   "{\"size\":%l,\"used\":%l,\"total\":%l,\"fails\":%l},",
+                                   slot_size, stat->used * slot_size, stat->total * slot_size, stat->fails);
+            stat++;
+            slot_size <<= 1;
+        }
+
+        if (slot_count != 0) {
+            b->last--;
+        }
+
+        b->last = ngx_snprintf(b->last, b->end - b->last, "],\"summary\":{\"total\":%l,\"used\":%l}},", total_pages * ngx_pagesize, sum_size);
+#else
         b->last = ngx_snprintf(b->last, b->end - b->last,
                                "{\"name\": \"%s\",\"pages\":%l,\"free_pages\":%l,\"used\":\"%l%%\"},",
                                shm_zone[i].shm.name.data, total_pages, free_pages, 100 * (total_pages - free_pages) / total_pages);
-
+#endif
         ngx_shmtx_unlock(&shpool->mutex);
     }
 
-    b->last--;
+    if (count != 0) {
+        b->last--;
+    }
 
     b->last = ngx_snprintf(b->last, b->end - b->last, "]}");
 }
