@@ -3,6 +3,10 @@ Name
 
 ngx_sysinfo - get information about nginx internals.
 
+Build status
+============
+[![Build Status](https://travis-ci.org/ZigzagAK/ngx_sysinfo.svg)](https://travis-ci.org/ZigzagAK/ngx_sysinfo)
+
 Table of Contents
 =================
 
