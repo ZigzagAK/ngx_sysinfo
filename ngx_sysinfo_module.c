@@ -162,7 +162,7 @@ ngx_sysinfo_status_handler(ngx_http_request_t *r)
 static void
 ngx_sysinfo_status_json_format(ngx_buf_t *b)
 {
-    ngx_uint_t        i, count;
+    ngx_uint_t        i, j, count;
     ngx_shm_zone_t   *shm_zone;
     ngx_slab_pool_t  *shpool;
     ngx_slab_page_t  *page;
@@ -215,7 +215,7 @@ ngx_sysinfo_status_json_format(ngx_buf_t *b)
         slot_size = shpool->min_size;
         sum_size = 0;
 
-        for (i = 0; i < slot_count; i++) {
+        for (j = 0; j < slot_count; j++) {
             sum_size += stat->used * slot_size;
             b->last = ngx_snprintf(b->last, b->end - b->last,
                                    "{\"size\":%l,\"used\":%l,\"total\":%l,\"fails\":%l},",

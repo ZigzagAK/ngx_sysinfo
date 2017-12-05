@@ -35,10 +35,12 @@ Synopsis
 
 ```nginx
 http {
-  listen 5555;
+  server {
+    listen 5555;
 
-  location = /sysinfo {
-    sysinfo;
+    location = /sysinfo {
+      sysinfo;
+    }
   }
 
   upstream test1 {
